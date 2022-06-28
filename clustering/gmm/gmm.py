@@ -46,11 +46,14 @@ class Gmm(BaseEstimator, ClusterMixin):
                 liklihood[:,j]=self.weights_[j]*multivariate_normal(self.mean_[j],self.covariance_[j]).pdf(X)+1e-16
         return np.log(liklihood.sum(-1)).sum()
 
-    def fit(self, X, y=None):
+    def __validate_data_dimensions__(self,X):
         if X.ndim!=2:
-            raise ValueError('')
-        if X.shape[0]==0:
-            raise ValueError('')
+            raise ValueError('Data must be 2d')
+        if X.shape[0]==0 or X.shape[1]==0:
+            raise ValueError('Data cannot have empty dimensions')
+
+    def fit(self, X, y=None):
+        self.__validate_data_dimensions__(X)
         self.__init_parameters__(X)
         prev_ll=-np.Infinity
         current_ll=-np.Infinity
@@ -98,12 +101,9 @@ class Gmm(BaseEstimator, ClusterMixin):
         return self.predict_proba(X).argmax(axis=1)
 
     def predict_proba(self, X, y=None): 
-        if X.ndim!=2:
-            raise ValueError('')
-        if X.shape[0]==0:
-            raise ValueError('')
+        self.__validate_data_dimensions__(X)
         if X.shape[1]!=self.covariance_.shape[1]:
-            raise ValueError('')
+            raise ValueError('Number of features in data is incosistent with fitted data')
         pred=np.empty((X.shape[0],self.components))
         for j in range(self.components):
             pred[:,j]=self.weights_[j]*multivariate_normal(self.mean_[j],self.covariance_[j]).pdf(X)
